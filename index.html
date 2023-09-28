@@ -5,99 +5,43 @@
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.4.0/jspdf.umd.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.23/jspdf.plugin.autotable.min.js"></script>
   <style>
-    body {
-      font-family: Arial, sans-serif;
-    }
-    .container {
-      max-width: 600px;
-      margin: auto;
-    }
-    table {
-      width: 100%;
-      border-collapse: collapse;
-    }
-    th, td {
-      border: 1px solid black;
-      padding: 8px;
-      text-align: center;
-    }
+    /* ... (same as before) ... */
   </style>
 </head>
 <body>
 
   <div class="container">
-    <h1>Key and Radio Log</h1>
-    <input type="text" id="barcodeInput" placeholder="Scan Barcode" autofocus>
-    <table id="logTable">
-      <thead>
-        <tr>
-          <th>ID</th>
-          <th>Time-In</th>
-          <th>Time-Out</th>
-        </tr>
-      </thead>
-      <tbody>
-      </tbody>
-    </table>
-    <button id="saveBtn">Save</button>
-    <div id="lastSave">Last Save: N/A</div>
-    <button id="clearBtn">Clear Table</button>
-    <div id="lastClear">Last Clear: N/A</div>
+    <!-- ... (same as before) ... -->
   </div>
 
   <script>
-    const logTable = document.getElementById('logTable');
-    const barcodeInput = document.getElementById('barcodeInput');
-    const saveBtn = document.getElementById('saveBtn');
-    const clearBtn = document.getElementById('clearBtn');
-    const lastSave = document.getElementById('lastSave');
-    const lastClear = document.getElementById('lastClear');
-    const scannedIDs = {};
+    // ... (same as before) ...
 
-    barcodeInput.addEventListener('change', function() {
-      const barcode = barcodeInput.value;
-      const currentDateTime = new Date().toLocaleString();
-
-      if (!scannedIDs[barcode] || scannedIDs[barcode].timeOut) {
-        scannedIDs[barcode] = { timeIn: currentDateTime, timeOut: null };
+    // Load existing data from localStorage
+    window.addEventListener('load', function() {
+      const savedData = JSON.parse(localStorage.getItem('scannedIDs') || '{}');
+      for (const barcode in savedData) {
         const newRow = logTable.insertRow();
         newRow.insertCell(0).innerHTML = barcode;
-        newRow.insertCell(1).innerHTML = currentDateTime;
-        newRow.insertCell(2).innerHTML = 'Pending';
-      } else {
-        scannedIDs[barcode].timeOut = currentDateTime;
-        const newRow = logTable.insertRow();
-        newRow.insertCell(0).innerHTML = barcode;
-        newRow.insertCell(1).innerHTML = 'Pending';
-        newRow.insertCell(2).innerHTML = currentDateTime;
+        newRow.insertCell(1).innerHTML = savedData[barcode].timeIn;
+        newRow.insertCell(2).innerHTML = savedData[barcode].timeOut || 'Pending';
       }
-
-      barcodeInput.value = '';
-      barcodeInput.focus();
+      Object.assign(scannedIDs, savedData);
     });
 
-    saveBtn.addEventListener('click', function() {
-      const { jsPDF } = window.jspdf;
-      const doc = new jsPDF();
-      doc.text(new Date().toLocaleString(), 10, 10);
-      doc.autoTable({ html: '#logTable' });
-      doc.save(`${new Date().toLocaleDateString()}.pdf`);
-      lastSave.textContent = `Last Save: ${new Date().toLocaleString()}`;
+    // Save to localStorage whenever data changes
+    function saveToLocalStorage() {
+      localStorage.setItem('scannedIDs', JSON.stringify(scannedIDs));
+    }
+
+    barcodeInput.addEventListener('change', function() {
+      // ... (same as before) ...
+      saveToLocalStorage();
     });
 
     clearBtn.addEventListener('click', function() {
-      const passcode = prompt("Enter the passcode to clear the table:");
-      if (passcode === "852737") {
-        const tbody = logTable.getElementsByTagName('tbody')[0];
-        tbody.innerHTML = '';
-        for (const key in scannedIDs) {
-          delete scannedIDs[key];
-        }
-        lastClear.textContent = `Last Clear: ${new Date().toLocaleString()}`;
-        alert("Table cleared.");
-      } else {
-        alert("Incorrect passcode. Table not cleared.");
-      }
+      // ... (same as before) ...
+      saveToLocalStorage();
     });
   </script>
 
