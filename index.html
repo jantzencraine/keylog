@@ -1,11 +1,10 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <title>Employee Time Tracking</title>
+  <title>Key and Radio Log</title>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.4.0/jspdf.umd.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.23/jspdf.plugin.autotable.min.js"></script>
   <style>
-    /* Basic styling for the webpage */
     body {
       font-family: Arial, sans-serif;
     }
@@ -27,8 +26,8 @@
 <body>
 
   <div class="container">
-    <h1>Employee Time Tracking</h1>
-    <input type="text" id="barcodeInput" placeholder="Scan ID Badge" autofocus>
+    <h1>Key and Radio Log</h1>
+    <input type="text" id="barcodeInput" placeholder="Scan Barcode" autofocus>
     <table id="logTable">
       <thead>
         <tr>
@@ -38,35 +37,39 @@
         </tr>
       </thead>
       <tbody>
-        <!-- Rows will be added here dynamically -->
       </tbody>
     </table>
     <button id="saveBtn">Save</button>
+    <div id="lastSave">Last Save: N/A</div>
+    <button id="clearBtn">Clear Table</button>
+    <div id="lastClear">Last Clear: N/A</div>
   </div>
 
   <script>
     const logTable = document.getElementById('logTable');
     const barcodeInput = document.getElementById('barcodeInput');
     const saveBtn = document.getElementById('saveBtn');
+    const clearBtn = document.getElementById('clearBtn');
+    const lastSave = document.getElementById('lastSave');
+    const lastClear = document.getElementById('lastClear');
     const scannedIDs = {};
 
     barcodeInput.addEventListener('change', function() {
       const barcode = barcodeInput.value;
       const currentDateTime = new Date().toLocaleString();
 
-      if (!scannedIDs[barcode]) {
-        scannedIDs[barcode] = true;
+      if (!scannedIDs[barcode] || scannedIDs[barcode].timeOut) {
+        scannedIDs[barcode] = { timeIn: currentDateTime, timeOut: null };
         const newRow = logTable.insertRow();
-        newRow.id = `row-${barcode}`;
-        const idCell = newRow.insertCell(0);
-        const timeInCell = newRow.insertCell(1);
-        const timeOutCell = newRow.insertCell(2);
-        idCell.innerHTML = barcode;
-        timeInCell.innerHTML = currentDateTime;
-        timeOutCell.innerHTML = 'Pending';
+        newRow.insertCell(0).innerHTML = barcode;
+        newRow.insertCell(1).innerHTML = currentDateTime;
+        newRow.insertCell(2).innerHTML = 'Pending';
       } else {
-        const existingRow = document.getElementById(`row-${barcode}`);
-        existingRow.cells[2].innerHTML = currentDateTime;
+        scannedIDs[barcode].timeOut = currentDateTime;
+        const newRow = logTable.insertRow();
+        newRow.insertCell(0).innerHTML = barcode;
+        newRow.insertCell(1).innerHTML = 'Pending';
+        newRow.insertCell(2).innerHTML = currentDateTime;
       }
 
       barcodeInput.value = '';
@@ -78,13 +81,23 @@
       const doc = new jsPDF();
       doc.text(new Date().toLocaleString(), 10, 10);
       doc.autoTable({ html: '#logTable' });
-      const pdfName = `${new Date().toLocaleDateString()}.pdf`;
-      doc.save(pdfName);
+      doc.save(`${new Date().toLocaleDateString()}.pdf`);
+      lastSave.textContent = `Last Save: ${new Date().toLocaleString()}`;
+    });
 
-      // Clear the table and reset scanned IDs
-      const tbody = logTable.getElementsByTagName('tbody')[0];
-      tbody.innerHTML = '';
-      Object.keys(scannedIDs).forEach(key => delete scannedIDs[key]);
+    clearBtn.addEventListener('click', function() {
+      const passcode = prompt("Enter the passcode to clear the table:");
+      if (passcode === "852737") {
+        const tbody = logTable.getElementsByTagName('tbody')[0];
+        tbody.innerHTML = '';
+        for (const key in scannedIDs) {
+          delete scannedIDs[key];
+        }
+        lastClear.textContent = `Last Clear: ${new Date().toLocaleString()}`;
+        alert("Table cleared.");
+      } else {
+        alert("Incorrect passcode. Table not cleared.");
+      }
     });
   </script>
 
